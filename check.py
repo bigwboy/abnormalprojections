@@ -3,17 +3,19 @@
 #VERSION:1.0
 #__OUTHOR__:guangguang
 class CalculationsEngine():
+    #FlowDictoonary={key:日期
+    #                value:流量值 }
     def __init__(self,FlowDictoonary,AmountOfUsers):
-        self.FlowList=FlowDictoonary
+        self.FlowDictoonary=FlowDictoonary
         self.AmountOfUsers=AmountOfUsers
-        self.UnitFlowList=[]
+        self.UnitFlowList={}
         pass
     def GetData(self):
         pass
-    def CalculationsUnitFlow(self): #计算单位用户流量并进行排序
-        for Flow in self.FlowList:
-            self.UnitFlowList.append(Flow/self.AmountOfUsers)
-        self.UnitFlowList.sort()
+    def CalculationsUnitFlow(self): #计算单位用户流量并进行排序（升序）
+        for key in self.FlowDictoonary:
+            self.UnitFlowList[key]=(self.FlowDictoonary[key]/self.AmountOfUsers)
+        sorted(self.UnitFlowList.items(),key=lambda asd:asd[0],reverse=False)
     def Calculation(self):
         pass
     def ReturnData(self):
