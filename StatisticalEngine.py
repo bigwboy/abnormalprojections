@@ -2,7 +2,18 @@
 #time:2017/8/20 下午5:31
 #VERSION:1.0
 #__OUTHOR__:guangguang
+
+import xlrd
+
+def OpenFile(FILENAME):
+    pass
+
+
+
+
 import numpy
+
+
 class CalculationsEngine():
     #FlowDictoonary={key:日期
     #                value:流量值 }
