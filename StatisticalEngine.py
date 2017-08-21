@@ -9,20 +9,28 @@ import xlrd,re
 def OpenFile(FILENAME):
     WorkBook=xlrd.open_workbook(FILENAME)
     BookSheet=WorkBook.sheet_by_name('Sheet1')
-    p={}
-    FileDate={}
+    WorkDate={}
+    WeekDate={}
+    FileDate=[]
     for nrow in range(1,BookSheet.nrows):
         try:
             time=BookSheet.cell(nrow,0)
             time=xlrd.xldate.xldate_as_datetime(time.value, 0)
-            if time.weekday()<5: #平时数据
-                Key=time.strftime("%Y-%m-%d")
-                Value=BookSheet.cell(nrow,1)
-                FileDate[Key]=Value.value
-            else: #周末数据
-                pass
+            Key = time.strftime("%Y-%m-%d")
+            Value = BookSheet.cell(nrow, 1)
+            day_now=datetime.today()
+            q=day_now.date()-time.date()
+            if (day_now.date()-time.date()).days<30:
+                if time.weekday()<5: #平时数据
+                    WorkDate[Key]=Value.value
+                else: #周末数据
+                    WeekDate[Key]=Value.value
+
         except Exception,e:
-            print '读取文件错误'+str(e)
+            #print '读取文件错误'+str(e)
+            pass
+    FileDate.append(WorkDate)
+    FileDate.append(WeekDate)
     return FileDate
 
 import numpy
@@ -35,7 +43,12 @@ class CalculationsEngine():
         self.AmountOfUsers=AmountOfUsers
         self.UnitFlowDictoonary={}
         for key in FlowDictoonary:
-            self.UnitFlowDictoonary[key] = (FlowDictoonary[key] / self.AmountOfUsers)
+            try:
+                self.UnitFlowDictoonary[key] = (FlowDictoonary[key] / self.AmountOfUsers)
+            except Exception,e:
+                #print '数据类型错误:'+str(e)
+                #print str(key)
+                pass
     def GetData(self):
         pass
     def Calculation(self):#离散计算
@@ -62,10 +75,10 @@ class CalculationsEngine():
         self.Calculation()
         print "均值： " + str(self.Mean * self.AmountOfUsers)
         print "标准差： " + str(self.StandardDeviation * self.AmountOfUsers)
-        print "上内篱笆： " + str(self.UpInsideFance * self.AmountOfUsers)
-        print "下内篱笆： " + str(self.DownInsideFance * self.AmountOfUsers)
-        print "上外篱笆： " + str(self.UpOutsideFance * self.AmountOfUsers)
-        print '下外篱笆:  ' + str(self.DownOutsideFance * self.AmountOfUsers)
+        print "流量最大预警值： " + str(self.UpInsideFance * self.AmountOfUsers)
+        print "流量最小预警值： " + str(self.DownInsideFance * self.AmountOfUsers)
+        print "流量最大异常值： " + str(self.UpOutsideFance * self.AmountOfUsers)
+        print '流量最小异常值:  ' + str(self.DownOutsideFance * self.AmountOfUsers)
 
         for key  in self.UnitFlowDictoonary:
             #z得分
@@ -74,18 +87,22 @@ class CalculationsEngine():
                 print '流量正常 '+key + '\t' + str(self.UnitFlowDictoonary[key]*self.AmountOfUsers)
             elif abs(Z)>3:
                 if Z>0:
-                    print '流量异常：高于上外篱笆值 '+key +'\t'+str(self.UnitFlowDictoonary[key]*self.AmountOfUsers)
+                    print '流量异常：流量最大异常值 '+key +'\t'+str(self.UnitFlowDictoonary[key]*self.AmountOfUsers)
                 else:
-                    print '流量异常：低于下外篱笆值 '+ key +'\t'+str(self.UnitFlowDictoonary[key]*self.AmountOfUsers)
+                    print '流量异常：流量最小异常值 '+ key +'\t'+str(self.UnitFlowDictoonary[key]*self.AmountOfUsers)
             else:
                 if Z>0:
-                    print '流量告警：高于上内篱笆值 '+key + '\t' + str(self.UnitFlowDictoonary[key]*self.AmountOfUsers)
+                    print '流量告警：流量最大预警值 '+key + '\t' + str(self.UnitFlowDictoonary[key]*self.AmountOfUsers)
                     print
                 else:
-                    print '流量告警：低于下内篱笆值 '+key + '\t' + str(self.UnitFlowDictoonary[key]*self.AmountOfUsers)
+                    print '流量告警：流量最小预警值'+key + '\t' + str(self.UnitFlowDictoonary[key]*self.AmountOfUsers)
 
 
 if __name__=="__main__":
-    Date = OpenFile(u'数据.xlsx')
-    Check=CalculationsEngine(Date,100)
+    Date = OpenFile(u'外地统计.xlsx')
+    print '平时数据：'
+    Check=CalculationsEngine(Date[0],100)
+    Check.ReturnData()
+    print '周末数据：'
+    Check = CalculationsEngine(Date[1], 100)
     Check.ReturnData()
